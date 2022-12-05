@@ -1,0 +1,7 @@
+default:
+  tags:
+    - nix
+
+build:
+  script:
+    - nix build --out-link ~/pipeline-pins/tango-controls
