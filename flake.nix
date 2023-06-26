@@ -31,11 +31,11 @@
         };
         tango-controls = pkgs.stdenv.mkDerivation rec {
           pname = "tango";
-          version = "9.3.5";
+          version = "9.3.6";
 
           src = pkgs.fetchurl {
             url = "https://gitlab.com/api/v4/projects/24125890/packages/generic/TangoSourceDistribution/${version}/${pname}-${version}.tar.gz";
-            sha256 = "1i59023gqm6sk000520y4kamfnfa8xqy9xwsnz5ch22nflgqn9px";
+            sha256 = "sha256-1hN1QHh3hZfX1lQByMAmsc/96zuAH8gYsnRQynBOMko=";
           };
 
           enableParallelBuilding = true;
@@ -72,7 +72,7 @@
                 python = self.python;
               };
             in
-              [ final.tango-controls boostPython final.omniorb_4_2 final.cppzmq final.zeromq self.setuptools ];
+            [ final.tango-controls boostPython final.omniorb_4_2 final.cppzmq final.zeromq self.setuptools ];
 
           nativeBuildInputs = old.nativeBuildInputs ++ [ final.pkg-config ];
 
