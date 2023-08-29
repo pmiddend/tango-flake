@@ -86,6 +86,7 @@
             graphviz
             systemd
           ];
+          propagatedBuildInputs = with pkgs; [ final.omniorb_4_2 cppzmq zeromq libjpeg_turbo ];
 
           cmakeFlags = [
             "-DMySQL_LIBRARY_RELEASE=${pkgs.mariadb-connector-c}/lib/mariadb/libmariadb.so"
