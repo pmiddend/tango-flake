@@ -2,8 +2,12 @@
 , cppzmq
 , doxygen
 , fetchFromGitLab
-, tango-idl
+, opentelemetry-cpp
+, openssl
+, tango-idl-6
+, protobuf
 , graphviz
+, grpc
 , lib
 , libjpeg_turbo
 , libsodium
@@ -13,16 +17,37 @@
 , zlib
 , omniorb
 }:
+let
+  mainSrc = fetchFromGitLab {
+    name = "main";
+    owner = "tango-controls";
+    repo = "cpptango";
+    rev = "10.0.0";
+    hash = "sha256-LaB/C871fCJtF3CLNZp4qaEH1JAde0jP/fyKnHqYou4=";
+  };
+in
 stdenv.mkDerivation rec {
   pname = "cpptango";
   version = "10.0.0";
 
-  src = fetchFromGitLab {
-    owner = "tango-controls";
-    repo = pname;
-    rev = version;
-    hash = "sha256-LaB/C871fCJtF3CLNZp4qaEH1JAde0jP/fyKnHqYou4=";
-  };
+  srcs = [
+    mainSrc
+    (fetchFromGitLab {
+      owner = "tango-controls";
+      repo = "TangoCMakeModules";
+      rev = "dfc42901855bc7aae72a132e6f3373bab8660747";
+      hash = "sha256-irNv0m2q4Bd2zv+O/y6JAohCDMVRx7ZhALNv96wQRxA=j";
+      name = "TangoCMakeModules";
+    })
+  ];
+
+  # this is copied from the nixpkgs package for blender
+  postUnpack = ''
+    chmod -R u+w *
+    mv TangoCMakeModules --target-directory main
+  '';
+
+  sourceRoot = "main";
 
   enableParallelBuilding = true;
   nativeBuildInputs = [ cmake pkg-config ];
@@ -31,12 +56,16 @@ stdenv.mkDerivation rec {
     omniorb
     zeromq
     cppzmq
-    tango-idl
+    tango-idl-6
     libjpeg_turbo
     libsodium
     doxygen
     # needed for the docs
     graphviz
+    grpc
+    protobuf
+    opentelemetry-cpp
+    openssl
   ];
   propagatedBuildInputs = [
     omniorb
@@ -46,9 +75,13 @@ stdenv.mkDerivation rec {
     libsodium
   ];
 
-  # cmakeFlags = [
-  #   "-DCMAKE_SKIP_RPATH=ON"
-  # ];
+  # cmakeFlags = [ "-DCMAKE_MODULE_PATH=TangoCMakeModules" ];
+  cmakeFlags = [
+    # "-DCMAKE_SKIP_RPATH=ON"
+    # https://github.com/NixOS/nixpkgs/issues/297443
+    # "-DTANGO_USE_TELEMETRY=OFF"
+  ];
+
 
   postPatch = ''
     sed -i -e 's#Requires: libzmq#Requires: libzmq cppzmq#' -e 's#libdir=.*#libdir=@CMAKE_INSTALL_FULL_LIBDIR@#' tango.pc.cmake

@@ -26,7 +26,8 @@
           hardeningDisable = [ "format" ];
         };
 
-        tango-idl = final.callPackage ./tango-idl.nix { };
+        tango-idl-5 = final.callPackage ./tango-idl-5.nix { };
+        tango-idl-6 = final.callPackage ./tango-idl-6.nix { };
         cpptango-9_4 = final.callPackage ./cpptango-9_4.nix { };
         cpptango-10_0 = final.callPackage ./cpptango-10_0.nix { };
 
@@ -161,7 +162,7 @@
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ self.overlay ];
+            overlays = [ self.overlays.default ];
           };
         in
         {

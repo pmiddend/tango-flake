@@ -1,5 +1,11 @@
 # tango-flake: use Tango from Nix(OS)
 
+## What's packaged
+
+- cpptango: 9.4, 9.10
+- tango-idl: 5, 6
+- tango-controls: 9.3, 9.4
+
 ## Usage
 
 ### As a package

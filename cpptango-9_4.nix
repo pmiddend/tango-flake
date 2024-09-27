@@ -2,7 +2,7 @@
 , cppzmq
 , doxygen
 , fetchFromGitLab
-, tango-idl
+, tango-idl-5
 , graphviz
 , lib
 , libjpeg_turbo
