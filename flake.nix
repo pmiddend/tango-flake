@@ -10,21 +10,25 @@
     in
     {
       overlay = final: prev: {
-        omniorb_4_2 = with pkgs; stdenv.mkDerivation rec {
+        omniorb_4_2 = prev.stdenv.mkDerivation rec {
           pname = "omniorb";
           version = "4.2.5";
 
-          src = fetchurl {
+          src = prev.fetchurl {
             url = "mirror://sourceforge/project/omniorb/omniORB/omniORB-${version}/omniORB-${version}.tar.bz2";
             sha256 = "1fvkw3pn9i2312n4k3d4s7892m91jynl8g1v2z0j8k1gzfczjp7h";
           };
 
-          nativeBuildInputs = [ pkg-config ];
-          buildInputs = [ python3 ];
+          nativeBuildInputs = [ prev.pkg-config ];
+          buildInputs = [ prev.python3 ];
 
           enableParallelBuilding = true;
           hardeningDisable = [ "format" ];
         };
+
+        tango-idl = final.callPackage ./tango-idl.nix { };
+        cpptango-9_4 = final.callPackage ./cpptango.nix { };
+
         tango-controls-9_3 = pkgs.stdenv.mkDerivation rec {
           pname = "tango";
           version = "9.3.6";
@@ -118,7 +122,7 @@
 
       };
 
-      pytango-derivation-9_4 = final: self: super: {
+      lib.pytango-derivation-9_4 = final: self: super: {
         pytango = super.pytango.overrideAttrs (old: {
           buildInputs =
             let
@@ -135,7 +139,7 @@
         });
       };
 
-      pytango-derivation-9_3 = final: self: super: {
+      lib.pytango-derivation-9_3 = final: self: super: {
         pytango = super.pytango.overrideAttrs (old: {
           buildInputs =
             let
@@ -162,6 +166,7 @@
         {
           tango-controls-9_4 = pkgs.tango-controls-9_4;
           tango-controls-9_3 = pkgs.tango-controls-9_3;
+          inherit (pkgs) cpptango-9_4;
         };
 
       nixosModules.tango-controls =
