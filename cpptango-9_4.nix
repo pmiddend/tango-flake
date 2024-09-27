@@ -31,7 +31,7 @@ stdenv.mkDerivation rec {
     omniorb_4_2
     zeromq
     cppzmq
-    tango-idl
+    tango-idl-5
     libjpeg_turbo
     libsodium
     doxygen

@@ -5,3 +5,5 @@ default:
 build:
   script:
     - nix build .#tango-controls-9_4 --out-link ~/pipeline-pins/tango-controls
+    - nix build .#cpptango-9_4
+    - nix build .#cpptango-10_0
