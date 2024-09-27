@@ -20,7 +20,8 @@
           };
 
           nativeBuildInputs = [ prev.pkg-config ];
-          buildInputs = [ prev.python3 ];
+          # Python 3.11 is actually important here, the package breaks from 3.12 on.
+          buildInputs = [ prev.python311 ];
 
           enableParallelBuilding = true;
           hardeningDisable = [ "format" ];
