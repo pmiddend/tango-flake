@@ -9,7 +9,7 @@
       pkgs = import nixpkgs { inherit system; };
     in
     {
-      overlay = final: prev: {
+      overlays.default = final: prev: {
         omniorb_4_2 = prev.stdenv.mkDerivation rec {
           pname = "omniorb";
           version = "4.2.5";
@@ -27,7 +27,8 @@
         };
 
         tango-idl = final.callPackage ./tango-idl.nix { };
-        cpptango-9_4 = final.callPackage ./cpptango.nix { };
+        cpptango-9_4 = final.callPackage ./cpptango-9_4.nix { };
+        cpptango-10_0 = final.callPackage ./cpptango-10_0.nix { };
 
         tango-controls-9_3 = pkgs.stdenv.mkDerivation rec {
           pname = "tango";
@@ -164,9 +165,7 @@
           };
         in
         {
-          tango-controls-9_4 = pkgs.tango-controls-9_4;
-          tango-controls-9_3 = pkgs.tango-controls-9_3;
-          inherit (pkgs) cpptango-9_4;
+          inherit (pkgs) cpptango-9_4 cpptango-10_0 tango-controls-9_4 tango-controls-9_3;
         };
 
       nixosModules.tango-controls =

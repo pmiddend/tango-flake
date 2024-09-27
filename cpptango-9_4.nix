@@ -17,7 +17,6 @@ stdenv.mkDerivation rec {
   pname = "cpptango";
   version = "9.4.2";
 
-  # src = /home/pmidden/code/tango-projects/cppTango;
   src = fetchFromGitLab {
     owner = "tango-controls";
     repo = pname;
