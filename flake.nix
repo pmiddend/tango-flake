@@ -204,7 +204,7 @@
           };
 
           config = lib.mkIf config.services.tango-controls.enable {
-            nixpkgs.overlays = [ self.overlay ];
+            nixpkgs.overlays = [ self.overlays.default ];
 
             services.mysql = {
               # Taken from the gitea.nix module
