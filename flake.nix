@@ -197,6 +197,10 @@
 
             enable-starter = lib.mkEnableOption "enable Tango Starter service";
 
+            package = lib.mkPackageOption pkgs "tango-controls-9_4" {
+              example = "tango-controls-9_4";
+            };
+
             database = with pkgs.lib; {
               name = mkOption {
                 type = types.str;
@@ -243,7 +247,7 @@
               };
             };
 
-            environment.systemPackages = [ pkgs.tango-controls-9_4 ];
+            environment.systemPackages = [ config.services.tango-controls.package ];
             environment.variables = {
               TANGO_HOST = "localhost:10000";
             };
@@ -270,7 +274,7 @@
                 Environment = [ "TANGO_HOST=localhost:10000" ];
                 ExecStart =
                   # I've tried ${hostName} instead of 0.0.0.0 but this fails very weirdly
-                  "${pkgs.tango-controls-9_4}/bin/Databaseds 2 -ORBendPoint giop:tcp:0.0.0.0:10000";
+                  "${config.services.tango-controls.package}/bin/Databaseds 2 -ORBendPoint giop:tcp:0.0.0.0:10000";
                 # For some reason, this doesn't work. Gives "no such file or direcotry" while spawning the
                 # ExecStartPre script.
                 # StandardOutput = "file:/var/log/tango-db/stdout.txt";
@@ -302,7 +306,7 @@
                   echo "Creating Tango tables"
                   # The DB has been created by Nix on MySQL service creation already, so leave that statement
                   # out of the SQL migration thing using crude "sed" logic
-                  sed '/CREATE DATABASE/d' ${pkgs.tango-controls-9_4}/share/sql/create_db.sql | ${config.services.mysql.package}/bin/mysql -u ${config.services.tango-controls.database.user} ${config.services.tango-controls.database.name}
+                  sed '/CREATE DATABASE/d' ${config.services.tango-controls.package}/share/sql/create_db.sql | ${config.services.mysql.package}/bin/mysql -u ${config.services.tango-controls.database.user} ${config.services.tango-controls.database.name}
                 else
                   echo "Tango tables already there, skipping creation"
                 fi
@@ -322,7 +326,7 @@
                 User = config.services.tango-controls.database.user;
                 Environment = [ "TANGO_HOST=localhost:10000" ];
                 ExecStartPre = "${pkgs.coreutils}/bin/sleep 3s";
-                ExecStart = "${pkgs.tango-controls-9_4}/bin/TangoAccessControl 1";
+                ExecStart = "${config.services.tango-controls.package}/bin/TangoAccessControl 1";
               };
             };
 
@@ -339,13 +343,13 @@
                 Type = "simple";
                 User = config.services.tango-controls.database.user;
                 Environment = [ "TANGO_HOST=localhost:10000" ];
-                ExecStart = "${pkgs.tango-controls-9_4}/bin/Starter ${config.networking.hostName}";
+                ExecStart = "${config.services.tango-controls.package}/bin/Starter ${config.networking.hostName}";
               };
               preStart =
                 let hostName = config.networking.hostName;
                 in ''
                   echo "Adding starter device for host name ${hostName}."
-                  ${pkgs.tango-controls-9_4}/bin/tango_admin --add-server Starter/${hostName} Starter tango/admin/${hostName}
+                  ${config.services.tango-controls.package}/bin/tango_admin --add-server Starter/${hostName} Starter tango/admin/${hostName}
                   echo "Done adding starter device."
                 '';
             };
@@ -366,7 +370,7 @@
               serviceConfig = {
                 User = config.services.tango-controls.database.user;
                 Environment = [ "TANGO_HOST=localhost:10000" ];
-                ExecStart = "${pkgs.tango-controls-9_4}/bin/TangoTest test";
+                ExecStart = "${config.services.tango-controls.package}/bin/TangoTest test";
                 # necessary because the Databaseds takes a few seconds to "really" be online
                 ExecStartPre = "${pkgs.coreutils}/bin/sleep 3s";
               };
