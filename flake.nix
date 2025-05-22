@@ -1,7 +1,7 @@
 {
   description = "Tango is an Open Source solution for SCADA and DCS.";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-24.11";
+  inputs.nixpkgs.url = "nixpkgs/nixos-25.05";
 
   outputs = { self, nixpkgs }:
     let
@@ -234,6 +234,13 @@
                   ensurePermissions = { "${config.services.tango-controls.database.name}.*" = "ALL PRIVILEGES"; };
                 }
               ];
+              # Solution taken from
+              # https://gitlab.com/tango-controls/TangoDatabase/-/issues/69
+              settings = {
+                mysqld = {
+                  sql_mode = "ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";
+                };
+              };
             };
 
             environment.systemPackages = [ pkgs.tango-controls-9_4 ];
@@ -337,9 +344,9 @@
               preStart =
                 let hostName = config.networking.hostName;
                 in ''
-                  echo "Adding starter device for host name ${hostName}"
+                  echo "Adding starter device for host name ${hostName}."
                   ${pkgs.tango-controls-9_4}/bin/tango_admin --add-server Starter/${hostName} Starter tango/admin/${hostName}
-                  echo "Starting device server"
+                  echo "Done adding starter device."
                 '';
             };
 
