@@ -142,6 +142,62 @@
           '';
         };
 
+        tango-controls-10_0 = pkgs.stdenv.mkDerivation rec {
+          pname = "tango";
+          version = "10.0.2";
+
+          src = pkgs.fetchurl {
+            url = "https://gitlab.com/api/v4/projects/24125890/packages/generic/TangoSourceDistribution/${version}/${pname}-${version}.tar.gz";
+            hash = "sha256-RVrrgibPaGIQQ942I3dnTM8S16/tPvvzQvzYNBm/eIs=";
+          };
+
+          enableParallelBuilding = true;
+          nativeBuildInputs = with pkgs; [ cmake pkg-config ];
+          buildInputs = with pkgs; [
+            zlib
+            omniorb
+            zeromq
+            cppzmq
+            libjpeg_turbo
+            mariadb-connector-c
+            libsodium
+            doxygen
+            grpc
+            protobuf
+            opentelemetry-cpp
+            # without graphviz, the docs don't build
+            graphviz
+            systemd
+          ];
+          propagatedBuildInputs = with pkgs; [ omniorb cppzmq zeromq libjpeg_turbo ];
+
+          cmakeFlags = [
+            "-DMySQL_LIBRARY_RELEASE=${pkgs.mariadb-connector-c}/lib/mariadb/libmariadb.so"
+            "-DMySQL_INCLUDE_DIR=${pkgs.mariadb-connector-c.dev}/include/mariadb"
+            "-DMySQL_EXECUTABLE=${pkgs.mariadb-connector-c}/bin/mariadb"
+            "-DCMAKE_VERBOSE_MAKEFILE=TRUE"
+            # Necessary because otherwise, cmake, on installation, will remove the runtime path from the executable,
+            # thus we get "missing libmariadb.so".
+            "-DCMAKE_SKIP_RPATH=ON"
+            # Default is not to build access control
+            "-DTSD_TAC=ON"
+            "-DTSD_JAVA_PATH=${pkgs.openjdk11}"
+          ];
+
+          patches = [ ./sd_notify_cmake.patch ./fix-pc-file-10.patch ];
+
+          postPatch = ''
+            sed -i -e 's/MYSQL_VERSION_ID > 50000/1/' -e 's/mysql_get_client_version() >= 50013/1/' -e '/if (mysql_real_query(conn_pool\[con_nb\]\.db/i mysql_ping(conn_pool[con_nb].db);' -e 's/my_bool my_auto_reconnect=1;/my_bool my_auto_reconnect=1;WARN_STREAM << "client version: " << mysql_get_client_version() << std::endl;/' ./cppserver/database/DataBaseUtils.cpp
+            sed -i -e 's#Requires: libzmq#Requires: libzmq cppzmq#' lib/cpp/tango.pc.cmake
+          '';
+
+          postInstall = ''
+            mkdir -p $out/share/sql
+            for fn in cppserver/database/*sql; do
+              sed -e "s#^source #source $out/share/sql/#" "$fn" > $out/share/sql/$(basename "$fn")
+            done
+          '';
+        };
       };
 
       lib.pytango-derivation-9_4 = final: self: super: {
@@ -186,7 +242,7 @@
           };
         in
         {
-          inherit (pkgs) cpptango-9_4 cpptango-10_0 tango-controls-9_4 tango-controls-9_3;
+          inherit (pkgs) cpptango-9_4 cpptango-10_0 tango-controls-9_4 tango-controls-9_3 tango-controls-10_0;
         };
 
       nixosModules.tango-controls =
@@ -378,32 +434,64 @@
           };
         };
 
-      checks.${system}.vmTest =
-        pkgs.nixosTest
-          {
-            name = "wait-for-service-start";
+      checks.${system} = {
+        vmTest-9_4 =
+          pkgs.nixosTest
+            {
+              name = "wait-for-service-start-9_4";
 
-            nodes = {
-              client = { pkgs, ... }: {
-                imports = [ self.nixosModules.tango-controls ];
+              nodes = {
+                client = { pkgs, ... }: {
+                  imports = [ self.nixosModules.tango-controls ];
 
-                services.mysql.enable = true;
-                services.mysql.package = pkgs.mariadb;
-                services.tango-controls.enable = true;
-                services.tango-controls.enable-starter = true;
+                  services.mysql.enable = true;
+                  services.mysql.package = pkgs.mariadb;
+                  services.tango-controls.enable = true;
+                  services.tango-controls.enable-starter = true;
+                  services.tango-controls.package = pkgs.tango-controls-9_4;
+                };
               };
+
+              testScript =
+                ''
+                  start_all()
+                  client.wait_for_unit("tango-accesscontrol")
+                  client.wait_for_unit("tango-db")
+                  client.wait_for_unit("tango-starter")
+
+                  client.succeed("tango_admin --ping-database")
+                  client.succeed("tango_admin --check-device sys/tg_test/1")
+                '';
             };
 
-            testScript =
-              ''
-                start_all()
-                client.wait_for_unit("tango-accesscontrol")
-                client.wait_for_unit("tango-db")
-                client.wait_for_unit("tango-starter")
+        vmTest-10_0 =
+          pkgs.nixosTest
+            {
+              name = "wait-for-service-start-10_0";
 
-                client.succeed("tango_admin --ping-database")
-                client.succeed("tango_admin --check-device sys/tg_test/1")
-              '';
-          };
+              nodes = {
+                client = { pkgs, ... }: {
+                  imports = [ self.nixosModules.tango-controls ];
+
+                  services.mysql.enable = true;
+                  services.mysql.package = pkgs.mariadb;
+                  services.tango-controls.enable = true;
+                  services.tango-controls.enable-starter = true;
+                  services.tango-controls.package = pkgs.tango-controls-10_0;
+                };
+              };
+
+              testScript =
+                ''
+                  start_all()
+                  client.wait_for_unit("tango-accesscontrol")
+                  client.wait_for_unit("tango-db")
+                  client.wait_for_unit("tango-starter")
+
+                  client.succeed("tango_admin --ping-database")
+                  client.succeed("tango_admin --check-device sys/tg_test/1")
+                '';
+            };
+      };
     };
 }

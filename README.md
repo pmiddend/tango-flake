@@ -4,7 +4,9 @@
 
 - cpptango: 9.4, 9.10
 - tango-idl: 5, 6
-- tango-controls: 9.3, 9.4
+- tango-controls: 9.3, 9.4, 10.0
+
+For tango-controls, we are using the TangoSourceDistribution instead of a more modular approach for now, as this is significantly less work (especially regarding packaging the Java applications like Jive, and getting their dependency closure).
 
 ## Usage
 
