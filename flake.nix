@@ -181,7 +181,7 @@
             "-DCMAKE_SKIP_RPATH=ON"
             # Default is not to build access control
             "-DTSD_TAC=ON"
-            "-DTSD_JAVA_PATH=${pkgs.openjdk11}"
+            "-DTSD_JAVA_PATH=${pkgs.openjdk17}"
           ];
 
           patches = [ ./sd_notify_cmake.patch ./fix-pc-file-10.patch ];
